@@ -1,0 +1,24 @@
+ifndef CC
+	CC = cc
+else
+	CC = @(CC)
+endif
+
+CFLAGS += -pedantic 
+CFLAGS += -Wall
+CFLAGS += -Werror
+CFLAGS += -std=c99
+
+LFLAGS += -g
+
+!cc = |> ^ CC %f^ $(CC) $(CFLAGS) -c %f -o %o |> %B.o
+!ld = |> ^ LINK %o^ $(CC) $(LFLAGS) %f -o %o |>
+
+OBJS += main.o terminal.o textbuffer.o buffer.o menu.o util.o
+
+: foreach *.c | *.h |> !cc |>
+: util.o buffer.o buffer_test.o |> !ld |> buffer_test
+: terminal.o menu.o util.o buffer.o textbuffer.o menu_test.o |> !ld |> menu_test
+: buffer_test | script/test |> ^ TEST buffer_test^ ./script/test buffer_test |> buffer_test_actual
+: menu_test | script/test |> ^ TEST menu_test^ ./script/test menu_test |> menu_test_actual
+: $(OBJS) |> !ld |> tmenu
